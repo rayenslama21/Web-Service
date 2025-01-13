@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bardo National Museum Reservation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <h1>Bardo National Museum Reservation</h1>
+    </header>
+
+    <main class="container">
+        <section class="section">
+            <h2>Make a Reservation</h2>
+            <form id="reservation-form">
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="dayofvisit">Date of Visit:</label>
+                    <input type="date" id="dayofvisit" name="dayofvisit" required>
+                </div>
+                <div class="form-group">
+                    <label for="country">Country:</label>
+                    <select id="country" name="country" required>
+                        <option value="">Select your country</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reservation-code">Reservation Code:</label>
+                    <input type="text" id="reservation-code" name="reservation-code" placeholder="Enter your reservation code" required>
+                </div>
+                <button type="submit" class="button">Reserve</button>
+            </form>
+            <div id="message"></div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch("https://restcountries.com/v2/all")
+                .then(response => response.json())
+                .then(countries => {
+                    const countrySelect = document.getElementById("country");
+
+                    countries.forEach(country => {
+                        const option = document.createElement("option");
+                        option.value = country.name;
+                        option.textContent = country.name;
+                        countrySelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching country data:", error);
+                });
+        });
+
+        document.getElementById("reservation-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+
+            fetch("save_reservation.php", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                const messageDiv = document.getElementById("message");
+
+                if (data.trim() === "success") {
+                    messageDiv.innerHTML = "<p style='color: green;'>Your reservation was successful!</p>";
+                } else {
+                    messageDiv.innerHTML = "<p style='color: red;'>Failed to save reservation. Error: " + data + "</p>";
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                document.getElementById("message").innerHTML = "<p style='color: red;'>An error occurred. Please try again later.</p>";
+            });
+        });
+    </script>
+</body>
+</html>

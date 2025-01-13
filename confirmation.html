@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exhibit Finder</title>
+    <link rel="stylesheet" href="style3.css">
+</head>
+<body>
+    <header class="header">
+        <h1>Museum Exhibit Finder</h1>
+    </header>
+
+    <div class="links-container">
+        
+        <section id="add-visitor-section" class="section">
+            <a href="http://localhost/Web%20Service/reservations.html" id="add-visitor-link" class="button primary-button">Add a Visitor</a>
+        </section>
+        
+        
+        <section id="play-trivia-section" class="section">
+            <a href="http://localhost/Web%20Service/trivia.html" id="play-trivia-link" class="button primary-button">Trivia Game</a>
+        </section>
+    </div>
+
+    
+
+    <main class="container">
+        <section class="section">
+            <h2>Find Exhibit Details</h2>
+            <div class="form-group">
+                <label for="exhibit-select">Select Exhibit:</label>
+                <select id="exhibit-select" required>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="language-select">Select Language:</label>
+                <select id="language-select" required>
+                    <option value="en">English</option>
+                    <option value="fr">French</option>
+                    <option value="ar">Arabic</option>
+                </select>
+            </div>
+            <button id="fetch-exhibit" class="button">Get Exhibit Details</button>
+        </section>
+
+        <section id="exhibit-details" class="section">
+            <h2>Exhibit Information</h2>
+            <div id="exhibit-info">
+                
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const apiUrl = "http://127.0.0.1:8000"; 
+
+        
+        fetch(`${apiUrl}/exhibits/exhibits/names`)
+            .then(response => response.json())
+            .then(exhibits => {
+                const exhibitSelect = document.getElementById("exhibit-select");
+                exhibits.forEach(exhibit => {
+                    const option = document.createElement("option");
+                    option.value = exhibit.name;
+                    option.textContent = exhibit.name;
+                    exhibitSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error("Error fetching exhibit names:", error));
+
+        document.getElementById("fetch-exhibit").addEventListener("click", () => {
+            const exhibitName = document.getElementById("exhibit-select").value;
+            const language = document.getElementById("language-select").value;
+
+            if (!exhibitName || !language) {
+                alert("Please select an exhibit and a language.");
+                return;
+            }
+
+            fetch(`${apiUrl}/exhibits/exhibits/details?name=${encodeURIComponent(exhibitName)}&language=${language}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Exhibit '${exhibitName}' not found in '${language}' language`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const exhibitInfo = document.getElementById("exhibit-info");
+                    exhibitInfo.innerHTML = `
+                        <p><strong>Name:</strong> ${data.name}</p>
+                        <p><strong>Language:</strong> ${data.language}</p>
+                        <p><strong>Description:</strong> ${data.description || "No description available"}</p>
+                        <p><strong>Audio File:</strong> 
+                            ${data.audio_guide_url ? `<audio controls><source src="${data.audio_guide_url}" type="audio/mpeg">Your browser does not support the audio element.</audio>` : "No audio file available"}
+                        </p>
+                    `;
+                })
+                .catch(error => {
+                    console.error("Error fetching exhibit details:", error);
+                    document.getElementById("exhibit-info").innerHTML = `<p style="color: red;">${error.message}</p>`;
+                });
+        });
+    </script>
+</body>
+</html>

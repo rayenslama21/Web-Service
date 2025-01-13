@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia Game</title>
+    <link rel="stylesheet" href="style4.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Trivia Game</h1>
+        <div id="scoreboard" class="scoreboard">Score: 0</div>
+        <div id="trivia-section">
+            <div id="question" class="question"></div>
+            <ul id="options" class="options"></ul>
+            <div id="result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:8000"; 
+        let currentQuestion = null;
+        let username = "guest_user"; // You can replace this with a dynamic username system if needed
+        let score = 0;
+
+        // Fetch random question
+        async function fetchRandomQuestion(exhibitId = 1) {
+            try {
+                const response = await fetch(`${API_BASE}/trivia/random/${exhibitId}`);
+                if (!response.ok) {
+                    throw new Error("Failed to fetch question");
+                }
+                currentQuestion = await response.json();
+                displayQuestion();
+            } catch (error) {
+                document.getElementById("result").textContent = "Error loading question: " + error.message;
+            }
+        }
+
+        // Display question and options
+        function displayQuestion() {
+            const questionDiv = document.getElementById("question");
+            const optionsList = document.getElementById("options");
+            const resultDiv = document.getElementById("result");
+
+            questionDiv.textContent = currentQuestion.question;
+            optionsList.innerHTML = "";
+            resultDiv.textContent = "";
+
+            currentQuestion.options.forEach(option => {
+                const li = document.createElement("li");
+                const button = document.createElement("button");
+                button.textContent = option;
+                button.onclick = () => submitAnswer(option);
+                li.appendChild(button);
+                optionsList.appendChild(li);
+            });
+        }
+
+        // Submit answer to the server
+        async function submitAnswer(answer) {
+            try {
+                const response = await fetch(`${API_BASE}/trivia/answer`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        question_id: currentQuestion.id,
+                        answer: answer,
+                    }),
+                });
+                if (!response.ok) {
+                    throw new Error("Failed to submit answer");
+                }
+                const result = await response.json();
+                updateScore(result);
+                displayResult(result);
+            } catch (error) {
+                document.getElementById("result").textContent = "Error submitting answer: " + error.message;
+            }
+        }
+
+        // Update the score dynamically
+        function updateScore(result) {
+            if (result.correct) {
+                score += 1;
+            } else {
+                score -= 1;
+            }
+            const scoreboard = document.getElementById("scoreboard");
+            scoreboard.textContent = `Score: ${score}`;
+            if (score === 10) {
+                window.location.href = "congratulations.html";
+            }
+        
+        
+            
+        }
+
+        // Display result of the submitted answer
+        function displayResult(result) {
+            const resultDiv = document.getElementById("result");
+            if (result.correct) {
+                resultDiv.textContent = "Correct! 🎉 The answer is " + result.correct_answer + ".";
+                resultDiv.style.color = "green";
+                setTimeout(() => fetchRandomQuestion(), 2000); // Load next question after 2 second
+            } else {
+                resultDiv.textContent = "Incorrect. 😞 The correct answer is " + result.correct_answer + ".";
+                resultDiv.style.color = "red";
+            }
+        }
+
+        // Fetch a random question on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchRandomQuestion();
+        });
+    </script>
+</body>
+</html>

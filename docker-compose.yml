@@ -1,0 +1,17 @@
+version: "3.10.0"  
+
+services:
+  fastapi:
+    build: .
+    container_name: fastapi-web-service
+    ports:
+      - "8000:8000"  
+    restart: always  
+    environment:
+      - ENV=development  
+    networks:
+      - fastapi-network
+
+networks:
+  fastapi-network:
+    driver: bridge  
